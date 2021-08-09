@@ -1,0 +1,29 @@
+{
+  "version": 1, 
+  "pr_techs": [
+      "TSR",
+      "wheel",
+      "goblin",
+      "DynREM",
+      "failSafes",
+      "Hazard",
+      "roadProfile",
+      "fusion",
+      "vehicles",
+      "WMBC",
+      "hrSpots",
+      "MEMem",
+      "road",
+      "freeSpace",
+      "SCM",
+      "Pedestrians",
+      "VRM",
+      "WM_egoMotion",
+      "collision",
+      "OnlineCalibration",
+      "localization",
+      "animals",
+      "MOD",
+      "xMotion"
+  ]
+}
