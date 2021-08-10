@@ -4,7 +4,6 @@ import sys
 import os
 
 EMPTY_STRING = ""
-
 IS_PR_DISABLED2 = "PartialRun_API::isTechDisabledByPartialRun"
 TECH_TYPE_FORM = "PartialRun::PRTechType::"
 IS_PR_DISABLED1 = "RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN"
