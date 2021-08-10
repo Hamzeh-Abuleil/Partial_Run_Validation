@@ -6,7 +6,7 @@
 #challenges/issues/possible solutions/other possible designs pros and cons
 
 
-#1) Paths:
+1) Paths:
 #a. MONO_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
 #b. 2FOV_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
 #b. 3FOV_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/3FOV"
