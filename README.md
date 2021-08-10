@@ -32,3 +32,9 @@
 
 #5) unused_SEPs.csv
 
+#6) assumes the input is given in the following format: 
+    (MONO/WONO/3FOV/2FOV) (ids)
+    for example:
+        MONO 1 5 2
+
+#7) for the input -h or --h, list of all the possible technologies will be printed

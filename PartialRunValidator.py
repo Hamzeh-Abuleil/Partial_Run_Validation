@@ -9,9 +9,10 @@ WONO_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
 
 TECHS_PATH = "ME_Ex/partialRun/python/pr_techs_list.json"
 
-MONO = "Mono"
-FOV = "2FOV"
-WONO = "Wono"
+MONO = "MONO"
+FOV2 = "2FOV"
+FOV3 = "3FOV"
+WONO = "WONO"
 
 WRITE = 'w'
 READ = 'r'
@@ -29,7 +30,7 @@ def write_seps_from(data):
 def read_brain(techs, brain_path, code_base_seps, brain_type):
     data = []
     used_seps = set()
-
+    unused_seps = set()
     with open(brain_path, READ) as file:
         for line in file:
             edited_line = line.rstrip()
@@ -47,13 +48,16 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
                     tech = code_base_seps[sep_name]
                     used_seps.add(sep_name)
 
+                else:
+                    unused_seps.add(sep_name)
+
                 if tech == "N/A":
                     tech = get_tech(sep_name, techs)
 
                 id = get_id(tech, techs)
 
                 data.append([sep_name, brain_type, supp_stat, tech, id])
-    return data, used_seps
+    return data, used_seps, unused_seps
 
 
 def get_id(tech, techs):
@@ -69,6 +73,7 @@ def get_tech(sep_name, techs):
         if technology in sep_name:
             tech = technology
     return tech
+
 
 def store_seps():
     seps = {}
@@ -127,13 +132,59 @@ def get_techs():
         return json.load(file)["pr_techs"]
 
 
+def do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, MONO_unused_seps,
+                    FOV_unused_seps, WONO_unused_seps, code_base_seps):
+    if len(args) == 1 and (args[0] == "-h" or args[0] == "--h"):
+        for tech in techs:
+            print(get_id(tech, techs), tech)
+
+    else:
+        ids = {get_id(tech, techs) for tech in techs}
+        if len(args) > 1:
+            ids = {int(arg) for arg in args[1:]}
+
+        if args[0] == MONO:
+            list_seps(MONO_used_seps, MONO_unused_seps, ids, code_base_seps, techs)
+
+        elif args[0] == FOV2:
+            list_seps(FOV_used_seps, FOV_unused_seps, ids, code_base_seps, techs)
+
+        elif args[0] == FOV3:
+            print("FOV3 has no SEPs")
+
+        elif args[0] == WONO:
+            list_seps(WONO_used_seps, WONO_unused_seps, ids, code_base_seps, techs)
+
+
+def list_seps(used_seps, unused_seps, ids, code_base_seps, techs):
+    print("SUPPORTED SEPS:")
+    print()
+    for sep in used_seps:
+        if get_id(code_base_seps[sep], techs) in ids:
+            print(sep)
+    print()
+    print("UNSUPPORTED SEPS:")
+    print()
+    for sep in unused_seps:
+        tech = get_tech(sep, techs)
+        if get_id(tech, techs) in ids:
+            print(sep)
+
+
 if __name__ == '__main__':
     code_base_seps = store_seps()
     techs = get_techs()
-    MONO_data, used_seps_1 = read_brain(techs, MONO_PATH, code_base_seps, MONO)
-    FOV_data, used_seps_2 = read_brain(techs, FOV_PATH, code_base_seps, FOV)
-    WONO_data, used_seps_3 = read_brain(techs, WONO_PATH, code_base_seps, WONO)
-    # args = sys.argv[1:]
+
+    MONO_data, MONO_used_seps, MONO_unused_seps = read_brain(techs, MONO_PATH, code_base_seps, MONO)
+    FOV_data, FOV_used_seps, FOV_unused_seps = read_brain(techs, FOV_PATH, code_base_seps, FOV2)
+    WONO_data, WONO_used_seps, WONO_unused_seps = read_brain(techs, WONO_PATH, code_base_seps, WONO)
+
     write_seps_from(MONO_data + FOV_data + WONO_data)
-    used_seps = set.union(set.union(used_seps_1, used_seps_2), used_seps_3)
+
+    used_seps = set.union(set.union(MONO_used_seps, FOV_used_seps), WONO_used_seps)
     write_unused_seps(techs, code_base_seps, used_seps)
+
+    args = sys.argv[1:]
+    do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, MONO_unused_seps,
+                    FOV_unused_seps, WONO_unused_seps, code_base_seps)
+
