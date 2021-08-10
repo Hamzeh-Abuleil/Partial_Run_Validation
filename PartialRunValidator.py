@@ -17,21 +17,18 @@ WRITE = 'w'
 READ = 'r'
 
 
-def write_data(data):
+def write_seps_from(data):
     header = ["SEP", "Brain Type", "Partial Run Supported", "Partial Run Technology Type",
               "Partial Run Technology Type ID"]
-    # data = [["S1", "MONO", "True", "N/A", "21"], ["S3", "FOV", "False", "N/A", "11"]]
     with open("SEPs.csv", WRITE, newline='') as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(data)
 
 
-def read_brain(brain_path, seps, brain_type):
+def read_brain(techs, brain_path, code_base_seps, brain_type):
     data = []
-    techs = []
-    with open(TECHS_PATH, READ) as file:
-        techs = json.load(file)["pr_techs"]
+    used_seps = set()
 
     with open(brain_path, READ) as file:
         for line in file:
@@ -45,23 +42,33 @@ def read_brain(brain_path, seps, brain_type):
 
                 supp_stat = False
 
-                if sep_name in seps.keys():
+                if sep_name in code_base_seps.keys():
                     supp_stat = True
-                    tech = seps[sep_name]
+                    tech = code_base_seps[sep_name]
+                    used_seps.add(sep_name)
 
                 if tech == "N/A":
-                    for technology in techs:
-                        if technology in sep_name:
-                            tech = technology
-                            break
-                id = "N/A"
+                    tech = get_tech(sep_name, techs)
 
-                if tech in techs:
-                    id = techs.index(tech)
+                id = get_id(tech, techs)
 
                 data.append([sep_name, brain_type, supp_stat, tech, id])
-    return data
+    return data, used_seps
 
+
+def get_id(tech, techs):
+    id = "N/A"
+    if tech in techs:
+        id = techs.index(tech)
+    return id
+
+
+def get_tech(sep_name, techs):
+    tech = "N/A"
+    for technology in techs:
+        if technology in sep_name:
+            tech = technology
+    return tech
 
 def store_seps():
     seps = {}
@@ -99,10 +106,34 @@ def store_seps():
     return seps
 
 
+def write_unused_seps(techs, code_base_seps, used_seps):
+    data = []
+    for sep_name in code_base_seps.keys():
+        if sep_name not in used_seps:
+            tech = code_base_seps[sep_name]
+            if tech == "N/A":
+                tech = get_tech(sep_name, techs)
+            id = get_id(tech, techs)
+            data.append([sep_name, tech, id])
+    header = ["SEP", "Partial Run Technology Type", "Partial Run Technology Type ID"]
+    with open("unused_SEPs.csv", WRITE, newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(data)
+
+
+def get_techs():
+    with open(TECHS_PATH, READ) as file:
+        return json.load(file)["pr_techs"]
+
+
 if __name__ == '__main__':
-    seps = store_seps()
-    MONO_data = read_brain(MONO_PATH, seps, MONO)
-    FOV_data = read_brain(FOV_PATH, seps, FOV)
-    WONO_data = read_brain(WONO_PATH, seps, WONO)
+    code_base_seps = store_seps()
+    techs = get_techs()
+    MONO_data, used_seps_1 = read_brain(techs, MONO_PATH, code_base_seps, MONO)
+    FOV_data, used_seps_2 = read_brain(techs, FOV_PATH, code_base_seps, FOV)
+    WONO_data, used_seps_3 = read_brain(techs, WONO_PATH, code_base_seps, WONO)
     # args = sys.argv[1:]
-    write_data(MONO_data + FOV_data + WONO_data)
+    write_seps_from(MONO_data + FOV_data + WONO_data)
+    used_seps = set.union(set.union(used_seps_1, used_seps_2), used_seps_3)
+    write_unused_seps(techs, code_base_seps, used_seps)

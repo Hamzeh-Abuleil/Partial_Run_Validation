@@ -28,4 +28,7 @@
 
 #3) SEPs.csv
 
-#4) 
+#4) in case there is no techType or ID for the current SEP, N/A was given as value
+
+#5) unused_SEPs.csv
+
