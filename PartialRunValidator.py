@@ -20,7 +20,7 @@ READ = 'r'
 def write_data(data):
     header = ["SEP", "Brain Type", "Partial Run Supported", "Partial Run Technology Type",
               "Partial Run Technology Type ID"]
-    # data = [["S1", "MONO", "True", "UNKNOWN", "21"], ["S3", "FOV", "False", "UNKNOWN", "11"]]
+    # data = [["S1", "MONO", "True", "N/A", "21"], ["S3", "FOV", "False", "N/A", "11"]]
     with open("SEPs.csv", WRITE, newline='') as file:
         writer = csv.writer(file)
         writer.writerow(header)
@@ -41,7 +41,7 @@ def read_brain(brain_path, seps, brain_type):
                 starting_index = sub_line.index("_") + 1
                 ending_index = sub_line.index("(")
                 sep_name = sub_line[starting_index:ending_index]
-                tech = "UNKNOWN"
+                tech = "N/A"
 
                 supp_stat = False
 
@@ -49,13 +49,17 @@ def read_brain(brain_path, seps, brain_type):
                     supp_stat = True
                     tech = seps[sep_name]
 
-                if tech == "UNKNOWN":
+                if tech == "N/A":
                     for technology in techs:
                         if technology in sep_name:
                             tech = technology
                             break
+                id = "N/A"
 
-                data.append([sep_name, brain_type, supp_stat, tech, "UNKNOWN"])
+                if tech in techs:
+                    id = techs.index(tech)
+
+                data.append([sep_name, brain_type, supp_stat, tech, id])
     return data
 
 
@@ -65,7 +69,7 @@ def store_seps():
         for filename in files:
             if filename.startswith("SEP"):
                 with open(subdir + os.sep + filename, READ) as file:
-                    current_sep_type = "UNKNOWN"
+                    current_sep_type = "N/A"
                     inner_seps = []
                     for line in file:
                         edited_line = line.rstrip()
