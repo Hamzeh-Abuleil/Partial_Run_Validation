@@ -4,7 +4,7 @@
  * Use this file for enableing partial run abilty on your technology,
  * for allowing disable of your tech for each SEP_<tech> in your code call to:
  * RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN(PartialRun::PRTechType::<TECH_NAME>)
- *  @ tech name will includ in PRTechType only after adding this teach to: listOfIFs.json
+ *  @ tech name will includ in PRTechType only after adding this teach to: listOfIFs.json4
  * ME.Develop/functionality/partialRun/python/listOfIFs.json
  * than Partial run auto generated enum with your technology prerequesist.
  *

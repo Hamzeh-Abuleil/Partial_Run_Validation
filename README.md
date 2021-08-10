@@ -26,4 +26,6 @@
     type: xMotion
     indicator: RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN(PartialRun::PRTechType::xMotion)
 
-#3)
+#3) SEPs.csv
+
+#4) 
