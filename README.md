@@ -7,10 +7,10 @@
 
 
 #1) Paths:
-#a. MONO_PATH: "out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
-#b. 2FOV_PATH: "out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
-#b. 3FOV_PATH: "out/EyeQ4sw_rel/projects/EyeQ/3FOV"
-#c. WONO_PATH: "out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
+#a. MONO_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
+#b. 2FOV_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
+#b. 3FOV_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/3FOV"
+#c. WONO_PATH: "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
 
 #2) instances of 'Partial Run Disabled' indicators and 'TECH_TYPES':
 #a. 

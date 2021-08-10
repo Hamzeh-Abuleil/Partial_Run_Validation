@@ -3,11 +3,11 @@ import csv
 import sys
 import os
 
-MONO_PATH = "out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
-FOV_PATH = "out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
-WONO_PATH = "out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
+MONO_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
+FOV_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
+WONO_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
 
-TECHS_PATH = "partialRun/python/pr_techs_list.json"
+TECHS_PATH = "ME_Ex/partialRun/python/pr_techs_list.json"
 
 MONO = "Mono"
 FOV = "2FOV"
@@ -27,7 +27,7 @@ def write_data(data):
         writer.writerows(data)
 
 
-def read_brain(brain_path, brain_type):
+def read_brain(brain_path, seps, brain_type):
     data = []
     techs = []
     with open(TECHS_PATH, READ) as file:
@@ -37,42 +37,68 @@ def read_brain(brain_path, brain_type):
         for line in file:
             edited_line = line.rstrip()
             if edited_line and "void SEP" in edited_line:
-                starting_index = edited_line.index("_") + 1
-                ending_index = edited_line.index("(")
-                sep_name = edited_line[starting_index:ending_index]
+                sub_line = edited_line[edited_line.find("void SEP"):]
+                starting_index = sub_line.index("_") + 1
+                ending_index = sub_line.index("(")
+                sep_name = sub_line[starting_index:ending_index]
                 tech = "UNKNOWN"
-                for technology in techs:
-                    if technology in sep_name:
-                        tech = technology
-                        break
-                data.append([sep_name, brain_type, "UNKNOWN", tech, "UNKNOWN"])
+
+                supp_stat = False
+
+                if sep_name in seps.keys():
+                    supp_stat = True
+                    tech = seps[sep_name]
+
+                if tech == "UNKNOWN":
+                    for technology in techs:
+                        if technology in sep_name:
+                            tech = technology
+                            break
+
+                data.append([sep_name, brain_type, supp_stat, tech, "UNKNOWN"])
     return data
 
 
 def store_seps():
-    directories = []
-    for filename in os.listdir(os.getcwd()):
-        if os.path.isdir(os.getcwd() + os.sep + filename):
-            directories.append(filename)
-    print(directories)
-    # for dr in directories:
-        # for subdir, dirs, files in os.walk(os.getcwd() + os.sep + dr):
-        #     for filename in files:
-        #         if filename.startswith("SEP"):
-        #             print(subdir + os.sep + filename)
-    # with open(brain_path, READ) as file:
-    #     for line in file:
-    #         edited_line = line.rstrip()
-    #         if edited_line and "void SEP" in edited_line:
-    #             starting_index = edited_line.index("_") + 1
-    #             ending_index = edited_line.index("(")
-    #             sep_name = edited_line[starting_index:ending_index]
+    seps = {}
+    for subdir, dirs, files in os.walk(os.getcwd() + os.sep + "ME_Ex"):
+        for filename in files:
+            if filename.startswith("SEP"):
+                with open(subdir + os.sep + filename, READ) as file:
+                    current_sep_type = "UNKNOWN"
+                    inner_seps = []
+                    for line in file:
+                        edited_line = line.rstrip()
+                        if edited_line:
+                            if "void SEP" in edited_line:
+                                sub_line = edited_line[edited_line.find("void SEP"):]
+                                starting_index = sub_line.index("_") + 1
+                                ending_index = sub_line.index("(")
+                                sep_name = sub_line[starting_index:ending_index]
+                                inner_seps.append(sep_name)
+
+                            elif "RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN" in edited_line:
+                                sub_line = edited_line[edited_line.find("RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN"):]
+                                starting_index = sub_line.index("(") + len("PartialRun::PRTechType::") + 1
+                                ending_index = sub_line.index(")")
+                                current_sep_type = sub_line[starting_index:ending_index]
+
+                            elif "PartialRun_API::isTechDisabledByPartialRun" in edited_line:
+                                sub_line = edited_line[edited_line.find("PartialRun_API::isTechDisabledByPartialRun"):]
+
+                                starting_index = sub_line.index("(") + len("PartialRun::PRTechType::") + 1
+                                ending_index = sub_line.index(")")
+                                current_sep_type = sub_line[starting_index:ending_index]
+                    for sep in inner_seps:
+                        seps[sep] = current_sep_type
+
+    return seps
 
 
 if __name__ == '__main__':
     seps = store_seps()
-    # MONO_data = read_brain(MONO_PATH, MONO)
-    # FOV_data = read_brain(FOV_PATH, FOV)
-    # WONO_data = read_brain(WONO_PATH, WONO)
+    MONO_data = read_brain(MONO_PATH, seps, MONO)
+    FOV_data = read_brain(FOV_PATH, seps, FOV)
+    WONO_data = read_brain(WONO_PATH, seps, WONO)
     # args = sys.argv[1:]
-    # write_data(MONO_data + FOV_data + WONO_data)
+    write_data(MONO_data + FOV_data + WONO_data)
