@@ -1,0 +1,41 @@
+srcs = [
+   'Cam2CamEgoMotionManager.cpp',
+   'Cam2CamEgoMotionCalibrator.cpp',
+   'Cam2CamOutput.cpp',
+   'egomotionCalibrator.cpp',
+   'egomotionCovarianceMatrices.cpp',
+   '../../CalibUtils/calibMath.cpp',
+   '../../CalibUtils/calibTypes.cpp',
+   '../../CalibUtils/calibMatUtils.cpp',
+   '../../CalibUtils/egomotionio.cpp',
+   'Cam2CamInternalStateInfo.cpp'
+   ]
+
+app_srcs = [
+   'standalone/main.cpp',
+   'standalone/test_Cam2Cam.cpp',
+   '../CalibratorManager.cpp',
+   '../ExtrinsicCalibratorManager.cpp',
+   '../ExtrinsicCalibrationProperties.cpp',
+   '../../OnlineCalibrationCommonDefs.cpp',
+   '../../stubs/stubs.cpp',
+   '../../stubs/EM_stubs.cpp',
+   ]
+
+util_libs = [
+    'mobilimg',
+    'basicTypes',
+    'gsf',
+    'mobildbg',
+    'mobilib',
+    'worldModelSAExternalSources',
+    'worldModelEgoMotionRepository',
+    'imageInfo',
+    'partialRun_API',
+    ]
+
+external_libs_ult = []
+oc_c2c_lib = create_lib('OnlineCalibrationCam2Cam', srcs)
+oc_c2c_app = create_app('OnlineCalibrationCam2CamApp', srcs + app_srcs, util_libs, external_libs_ult)
+
+oc_c2c_app.features.extend([FEATURES.SYMLINK, 'GTEST_APP'])

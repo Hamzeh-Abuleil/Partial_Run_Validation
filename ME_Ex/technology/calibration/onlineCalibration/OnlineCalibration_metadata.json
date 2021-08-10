@@ -1,0 +1,11 @@
+{
+  "tech": "OnlineCalibration", 
+  "dependencies": [
+      "WM", 
+      "failSafes", 
+      "PrepSys", 
+      "egoMotion", 
+      "vehicles"
+  ], 
+  "version": 1
+}

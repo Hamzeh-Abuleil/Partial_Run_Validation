@@ -1,0 +1,39 @@
+{
+ "imagesConf": {
+  "singleton": true,
+  "technology": "WMBC",
+   "flavors": [
+     {
+       "name": ["Wono","Mono","3FOV", "SRD","Mono8","SRD8","Dual8","ADHS"],
+       "images": [
+         {
+           "name": "REGULAR",
+           "imageTypes": [
+             {
+               "name": "SLOW",
+               "expDeps": [{"dep": "LGTM_IMG1","exp": "IMG1"}],
+               "caminst": "e_FORWARD",
+               "pyrtype": "ltm"
+             },
+             {
+               "name": "RAW",
+               "expDeps": [{"dep": "RAW_SYNC_IMG1","exp": "IMG1"},{"dep": "RAW_SYNC_IMG2","exp": "IMG2"},{"dep": "RAW_SYNC_IMG3","exp": "IMG3"},{"dep": "RAW_SYNC_IMG4","exp": "IMG4"}],
+               "caminst": "e_FORWARD",
+               "specialType"  : "Raw"
+             },
+             {
+               "name": "POST_REPORTER",
+                 "expDeps": [{"dep": "post_REPORTER_IMG1_reporter","exp": "IMG1"},
+                             {"dep": "post_REPORTER_IMG2_reporter","exp": "IMG2"},
+                             {"dep": "post_REPORTER_IMG3_reporter","exp": "IMG3"},
+                             {"dep": "post_REPORTER_IMG4_reporter","exp": "IMG4"}],
+               "caminst": "e_FORWARD", 
+               "pyrtype": "none"
+             }
+           ]
+         }
+       ]
+     }
+   ]
+ }
+}

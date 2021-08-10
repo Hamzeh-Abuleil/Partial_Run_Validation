@@ -1,0 +1,11 @@
+{
+    "tech": "WMBC", 
+    "dependencies": [
+        "WM", 
+        "failSafes", 
+        "PrepSys", 
+        "egoMotion", 
+        "vehicles"
+    ], 
+    "version": 1
+}
