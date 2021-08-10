@@ -3,6 +3,8 @@ import csv
 import sys
 import os
 
+EMPTY_STRING = ""
+
 IS_PR_DISABLED2 = "PartialRun_API::isTechDisabledByPartialRun"
 TECH_TYPE_FORM = "PartialRun::PRTechType::"
 IS_PR_DISABLED1 = "RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN"
@@ -19,7 +21,7 @@ OPEN_BRACKET = "("
 UNDERSCORE = "_"
 N_A = "N/A"
 SEP_DECLARATION = "void SEP"
-SEP_CV = "SEPs.csv"
+SEP_CSV = "SEPs.csv"
 TECHNOLOGY_TYPE_ID = "Partial Run Technology Type ID"
 TECHNOLOGY_TYPE = "Partial Run Technology Type"
 PARTIAL_RUN_SUPPORTED = "Partial Run Supported"
@@ -41,16 +43,105 @@ WRITE = 'w'
 READ = 'r'
 
 
-def write_seps_from(data):
-    header = [SEP, BRAIN_TYPE, PARTIAL_RUN_SUPPORTED, TECHNOLOGY_TYPE,
-              TECHNOLOGY_TYPE_ID]
-    with open(SEP_CV, WRITE, newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(header)
-        writer.writerows(data)
+def store_seps():
+    """
+    Extracts every sep in the code base, and its techType.
+    :return: Returns a dictionary of {sep : sepTechType}
+    """
+    seps = {}
+    for subdir, dirs, files in os.walk(os.getcwd() + os.sep + GIVEN_DIR):
+        for filename in files:
+            if filename.startswith(SEP):
+                with open(subdir + os.sep + filename, READ) as file:
+                    current_sep_type = N_A
+                    inner_seps = []
+                    for line in file:
+                        edited_line = line.rstrip()
+                        if edited_line:
+                            if SEP_DECLARATION in edited_line:
+                                sep_name = extract_word(edited_line, SEP_DECLARATION, UNDERSCORE,
+                                                        OPEN_BRACKET, len(EMPTY_STRING))
+                                inner_seps.append(sep_name)
+
+                            elif IS_PR_DISABLED1 in edited_line:
+                                current_sep_type = extract_word(edited_line, IS_PR_DISABLED1, OPEN_BRACKET,
+                                                                CLOSE_BRACKET, len(TECH_TYPE_FORM))
+
+                            elif IS_PR_DISABLED2 in edited_line:
+                                current_sep_type = extract_word(edited_line, IS_PR_DISABLED2, OPEN_BRACKET,
+                                                                CLOSE_BRACKET, len(TECH_TYPE_FORM))
+
+                    for sep in inner_seps:
+                        seps[sep] = current_sep_type
+    return seps
+
+
+def extract_word(string, str_indicator, letter_starter, letter_ender, letters_num_to_skip):
+    """
+    Extracts a substring from the given string such as
+     this substring starts with the letter_starter by skipping (letters_num_to_skip) letters
+      and ends with the letter_ender.
+    :param string: The string that includes the desired substring
+    :param str_indicator: The string that indicates the desired substring
+    :param letter_starter: The letter that we starts with
+    :param letter_ender: The letter that we stops at
+    :param letters_num_to_skip: Number of letters needed to skip
+    :return: Returns substring according to the input.
+    """
+    substring = string[string.find(str_indicator):]
+    starting_index = substring.index(letter_starter) + letters_num_to_skip + 1
+    ending_index = substring.index(letter_ender)
+    return substring[starting_index:ending_index]
+
+
+def get_techs():
+    """
+    Gets every optional technology type.
+    :return: Returns a list of the partial technologies.
+    """
+    with open(TECHS_PATH, READ) as file:
+        return json.load(file)[PARTIAL_TECHS]
+
+
+def get_tech(sep_name, techs):
+    """
+    Gets the tech of the given sep
+    :param sep_name: The name of the sep
+    :param techs: List of every possible technology type
+    :return: Returns the sep technology type. N/A in case none were found.
+    """
+    tech = N_A
+    for technology in techs:
+        if technology in sep_name:
+            tech = technology
+    return tech
+
+
+def get_id(tech, techs):
+    """
+    Gets the tech-id based on the tech.
+    :param tech: Sep technology
+    :param techs: List of every possible technology type
+    :return: Returns the partial run sep technology ID. N/A in case none were found.
+    """
+    id = N_A
+    if tech in techs:
+        id = techs.index(tech)
+    return id
 
 
 def read_brain(techs, brain_path, code_base_seps, brain_type):
+    """
+    Reads the given brain file. Finds the declared seps in it, their brainType, technology type, their id,
+     and whether the sep is supported or not.
+    :param techs: List of every possible technology type
+    :param brain_path: Brain file path
+    :param code_base_seps: dictionary of every sep in the code base with its tech
+    :param brain_type: string that indicates the brainType
+    :return: Returns List of (lists)the rows that must be published in the csv.
+     Where each row contains: sep_name, brain_type, supported_status, techType, id.
+     Also, it returns the supported seps, and the not-supported seps.
+    """
     data = []
     used_seps = set()
     unused_seps = set()
@@ -58,13 +149,9 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
         for line in file:
             edited_line = line.rstrip()
             if edited_line and SEP_DECLARATION in edited_line:
-                sub_line = edited_line[edited_line.find(SEP_DECLARATION):]
-                starting_index = sub_line.index(UNDERSCORE) + 1
-                ending_index = sub_line.index(OPEN_BRACKET)
-                sep_name = sub_line[starting_index:ending_index]
-
+                sep_name = extract_word(edited_line, SEP_DECLARATION, UNDERSCORE,
+                                        OPEN_BRACKET, len(EMPTY_STRING))
                 tech = N_A
-
                 supp_stat = False
 
                 if sep_name in code_base_seps.keys():
@@ -84,62 +171,27 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
     return data, used_seps, unused_seps
 
 
-def get_id(tech, techs):
-    id = N_A
-    if tech in techs:
-        id = techs.index(tech)
-    return id
-
-
-def get_tech(sep_name, techs):
-    tech = N_A
-    for technology in techs:
-        if technology in sep_name:
-            tech = technology
-    return tech
-
-
-def store_seps():
+def write_seps_from(data):
     """
-
-    :return:
+    Writes every available sep in all of the three brains on a csv file.
+    :param data: List of (lists)rows - seps to write with their info
     """
-    seps = {}
-    for subdir, dirs, files in os.walk(os.getcwd() + os.sep + GIVEN_DIR):
-        for filename in files:
-            if filename.startswith(SEP):
-                with open(subdir + os.sep + filename, READ) as file:
-                    current_sep_type = N_A
-                    inner_seps = []
-                    for line in file:
-                        edited_line = line.rstrip()
-                        if edited_line:
-                            if SEP_DECLARATION in edited_line:
-                                sub_line = edited_line[edited_line.find(SEP_DECLARATION):]
-                                starting_index = sub_line.index(UNDERSCORE) + 1
-                                ending_index = sub_line.index(OPEN_BRACKET)
-                                sep_name = sub_line[starting_index:ending_index]
-                                inner_seps.append(sep_name)
-
-                            elif IS_PR_DISABLED1 in edited_line:
-                                sub_line = edited_line[edited_line.find(IS_PR_DISABLED1):]
-                                starting_index = sub_line.index(OPEN_BRACKET) + len(TECH_TYPE_FORM) + 1
-                                ending_index = sub_line.index(CLOSE_BRACKET)
-                                current_sep_type = sub_line[starting_index:ending_index]
-
-                            elif IS_PR_DISABLED2 in edited_line:
-                                sub_line = edited_line[edited_line.find(IS_PR_DISABLED2):]
-
-                                starting_index = sub_line.index(OPEN_BRACKET) + len(TECH_TYPE_FORM) + 1
-                                ending_index = sub_line.index(CLOSE_BRACKET)
-                                current_sep_type = sub_line[starting_index:ending_index]
-                    for sep in inner_seps:
-                        seps[sep] = current_sep_type
-
-    return seps
+    header = [SEP, BRAIN_TYPE, PARTIAL_RUN_SUPPORTED, TECHNOLOGY_TYPE,
+              TECHNOLOGY_TYPE_ID]
+    with open(SEP_CSV, WRITE, newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(data)
 
 
 def write_unused_seps(techs, code_base_seps, used_seps):
+    """
+    Writes the seps that are defined in the code base but wasn't used by any of the brains on a csv file.
+     Where every row includes sep_name, techType and techType-id.
+    :param techs: List of every possible technology type
+    :param code_base_seps: dictionary of every sep in the code base with its tech
+    :param used_seps: set of used seps in the three brains.
+    """
     data = []
     for sep_name in code_base_seps.keys():
         if sep_name not in used_seps:
@@ -156,13 +208,22 @@ def write_unused_seps(techs, code_base_seps, used_seps):
         writer.writerows(data)
 
 
-def get_techs():
-    with open(TECHS_PATH, READ) as file:
-        return json.load(file)[PARTIAL_TECHS]
-
-
 def do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, MONO_unused_seps,
                     FOV_unused_seps, WONO_unused_seps, code_base_seps):
+    """
+    If the input is -h or --h, it lists every possible technology with its id.
+    If the input is one of the brains(MONO/WONO/3FOV/2FOV) it lists the supported seps
+    according to the id input if provided, otherwise without restrictions.
+    :param args: input
+    :param techs: List of every possible technology type
+    :param MONO_used_seps: Set of the supported seps in MONO
+    :param FOV_used_seps: Set of the supported seps in 2FOV
+    :param WONO_used_seps: Set of the supported seps in WONO
+    :param MONO_unused_seps: Set of the unsupported seps in MONO
+    :param FOV_unused_seps: Set of the unsupported seps in 2FOV
+    :param WONO_unused_seps: Set of the unsupported seps in WONO
+    :param code_base_seps: dictionary of every sep in the code base with its tech
+    """
     if len(args) == 1 and (args[0] == HELP1 or args[0] == HELP2):
         for tech in techs:
             print(get_id(tech, techs), tech)
@@ -186,6 +247,15 @@ def do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, 
 
 
 def list_seps(used_seps, unused_seps, ids, code_base_seps, techs):
+    """
+    Lists supported seps and unsupported seps that matches the given ids
+    :param used_seps: Set of the supported seps
+    :param unused_seps: Set of the unsupported seps
+    :param ids: set of ids
+    :param code_base_seps: dictionary of every sep in the code base with its tech
+    :param techs: List of every possible technology type
+    :return:
+    """
     print(SUPPORTED_SEPS)
     print()
     for sep in used_seps:
@@ -216,4 +286,3 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, MONO_unused_seps,
                     FOV_unused_seps, WONO_unused_seps, code_base_seps)
-
