@@ -14,7 +14,6 @@
 1. Having a dictionary of the SEPs and their types allowed us to shuffle a SEP technology-type or id in O(1).
 2. Having sets of supported and unsupported SEPs allowed us to check if any SEP is PR_supported in O(1).
 * Lists were made when we didn't have an expensive operations, such as searching for an element. In that case, we used set/dictionary.
-#design 
 3. we only opened relevant(SEPs) files when we went through the whole code base. Thus, saved a lot of time.
 ---
 # Implemented Files:
