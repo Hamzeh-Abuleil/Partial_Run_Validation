@@ -3,6 +3,29 @@ import csv
 import sys
 import os
 
+IS_PR_DISABLED2 = "PartialRun_API::isTechDisabledByPartialRun"
+TECH_TYPE_FORM = "PartialRun::PRTechType::"
+IS_PR_DISABLED1 = "RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN"
+UNUSED_SEPS_CSV = "unused_SEPs.csv"
+PARTIAL_TECHS = "pr_techs"
+HELP2 = "--h"
+HELP1 = "-h"
+EMPTY_DIR = "FOV3 has no SEPs"
+SUPPORTED_SEPS = "SUPPORTED SEPS:"
+UNSUPPORTED_SEPS = "UNSUPPORTED SEPS:"
+GIVEN_DIR = "ME_Ex"
+CLOSE_BRACKET = ")"
+OPEN_BRACKET = "("
+UNDERSCORE = "_"
+N_A = "N/A"
+SEP_DECLARATION = "void SEP"
+SEP_CV = "SEPs.csv"
+TECHNOLOGY_TYPE_ID = "Partial Run Technology Type ID"
+TECHNOLOGY_TYPE = "Partial Run Technology Type"
+PARTIAL_RUN_SUPPORTED = "Partial Run Supported"
+BRAIN_TYPE = "Brain Type"
+SEP = "SEP"
+
 MONO_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Mono/brain/day_gsf_app.tmp.c"
 FOV_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/2FOV/day_gsf_app.tmp.c"
 WONO_PATH = "ME_Ex/out/EyeQ4sw_rel/projects/EyeQ/Wono/brain/day_gsf_app.tmp.c"
@@ -19,9 +42,9 @@ READ = 'r'
 
 
 def write_seps_from(data):
-    header = ["SEP", "Brain Type", "Partial Run Supported", "Partial Run Technology Type",
-              "Partial Run Technology Type ID"]
-    with open("SEPs.csv", WRITE, newline='') as file:
+    header = [SEP, BRAIN_TYPE, PARTIAL_RUN_SUPPORTED, TECHNOLOGY_TYPE,
+              TECHNOLOGY_TYPE_ID]
+    with open(SEP_CV, WRITE, newline='') as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(data)
@@ -34,12 +57,13 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
     with open(brain_path, READ) as file:
         for line in file:
             edited_line = line.rstrip()
-            if edited_line and "void SEP" in edited_line:
-                sub_line = edited_line[edited_line.find("void SEP"):]
-                starting_index = sub_line.index("_") + 1
-                ending_index = sub_line.index("(")
+            if edited_line and SEP_DECLARATION in edited_line:
+                sub_line = edited_line[edited_line.find(SEP_DECLARATION):]
+                starting_index = sub_line.index(UNDERSCORE) + 1
+                ending_index = sub_line.index(OPEN_BRACKET)
                 sep_name = sub_line[starting_index:ending_index]
-                tech = "N/A"
+
+                tech = N_A
 
                 supp_stat = False
 
@@ -51,7 +75,7 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
                 else:
                     unused_seps.add(sep_name)
 
-                if tech == "N/A":
+                if tech == N_A:
                     tech = get_tech(sep_name, techs)
 
                 id = get_id(tech, techs)
@@ -61,14 +85,14 @@ def read_brain(techs, brain_path, code_base_seps, brain_type):
 
 
 def get_id(tech, techs):
-    id = "N/A"
+    id = N_A
     if tech in techs:
         id = techs.index(tech)
     return id
 
 
 def get_tech(sep_name, techs):
-    tech = "N/A"
+    tech = N_A
     for technology in techs:
         if technology in sep_name:
             tech = technology
@@ -76,34 +100,38 @@ def get_tech(sep_name, techs):
 
 
 def store_seps():
+    """
+
+    :return:
+    """
     seps = {}
-    for subdir, dirs, files in os.walk(os.getcwd() + os.sep + "ME_Ex"):
+    for subdir, dirs, files in os.walk(os.getcwd() + os.sep + GIVEN_DIR):
         for filename in files:
-            if filename.startswith("SEP"):
+            if filename.startswith(SEP):
                 with open(subdir + os.sep + filename, READ) as file:
-                    current_sep_type = "N/A"
+                    current_sep_type = N_A
                     inner_seps = []
                     for line in file:
                         edited_line = line.rstrip()
                         if edited_line:
-                            if "void SEP" in edited_line:
-                                sub_line = edited_line[edited_line.find("void SEP"):]
-                                starting_index = sub_line.index("_") + 1
-                                ending_index = sub_line.index("(")
+                            if SEP_DECLARATION in edited_line:
+                                sub_line = edited_line[edited_line.find(SEP_DECLARATION):]
+                                starting_index = sub_line.index(UNDERSCORE) + 1
+                                ending_index = sub_line.index(OPEN_BRACKET)
                                 sep_name = sub_line[starting_index:ending_index]
                                 inner_seps.append(sep_name)
 
-                            elif "RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN" in edited_line:
-                                sub_line = edited_line[edited_line.find("RETURN_IF_TECH_DISABLED_BY_PARTIAL_RUN"):]
-                                starting_index = sub_line.index("(") + len("PartialRun::PRTechType::") + 1
-                                ending_index = sub_line.index(")")
+                            elif IS_PR_DISABLED1 in edited_line:
+                                sub_line = edited_line[edited_line.find(IS_PR_DISABLED1):]
+                                starting_index = sub_line.index(OPEN_BRACKET) + len(TECH_TYPE_FORM) + 1
+                                ending_index = sub_line.index(CLOSE_BRACKET)
                                 current_sep_type = sub_line[starting_index:ending_index]
 
-                            elif "PartialRun_API::isTechDisabledByPartialRun" in edited_line:
-                                sub_line = edited_line[edited_line.find("PartialRun_API::isTechDisabledByPartialRun"):]
+                            elif IS_PR_DISABLED2 in edited_line:
+                                sub_line = edited_line[edited_line.find(IS_PR_DISABLED2):]
 
-                                starting_index = sub_line.index("(") + len("PartialRun::PRTechType::") + 1
-                                ending_index = sub_line.index(")")
+                                starting_index = sub_line.index(OPEN_BRACKET) + len(TECH_TYPE_FORM) + 1
+                                ending_index = sub_line.index(CLOSE_BRACKET)
                                 current_sep_type = sub_line[starting_index:ending_index]
                     for sep in inner_seps:
                         seps[sep] = current_sep_type
@@ -116,12 +144,13 @@ def write_unused_seps(techs, code_base_seps, used_seps):
     for sep_name in code_base_seps.keys():
         if sep_name not in used_seps:
             tech = code_base_seps[sep_name]
-            if tech == "N/A":
+            if tech == N_A:
                 tech = get_tech(sep_name, techs)
             id = get_id(tech, techs)
             data.append([sep_name, tech, id])
-    header = ["SEP", "Partial Run Technology Type", "Partial Run Technology Type ID"]
-    with open("unused_SEPs.csv", WRITE, newline='') as file:
+
+    header = [SEP, TECHNOLOGY_TYPE, TECHNOLOGY_TYPE_ID]
+    with open(UNUSED_SEPS_CSV, WRITE, newline='') as file:
         writer = csv.writer(file)
         writer.writerow(header)
         writer.writerows(data)
@@ -129,12 +158,12 @@ def write_unused_seps(techs, code_base_seps, used_seps):
 
 def get_techs():
     with open(TECHS_PATH, READ) as file:
-        return json.load(file)["pr_techs"]
+        return json.load(file)[PARTIAL_TECHS]
 
 
 def do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, MONO_unused_seps,
                     FOV_unused_seps, WONO_unused_seps, code_base_seps):
-    if len(args) == 1 and (args[0] == "-h" or args[0] == "--h"):
+    if len(args) == 1 and (args[0] == HELP1 or args[0] == HELP2):
         for tech in techs:
             print(get_id(tech, techs), tech)
 
@@ -150,20 +179,20 @@ def do_command_line(args, techs, MONO_used_seps, FOV_used_seps, WONO_used_seps, 
             list_seps(FOV_used_seps, FOV_unused_seps, ids, code_base_seps, techs)
 
         elif args[0] == FOV3:
-            print("FOV3 has no SEPs")
+            print(EMPTY_DIR)
 
         elif args[0] == WONO:
             list_seps(WONO_used_seps, WONO_unused_seps, ids, code_base_seps, techs)
 
 
 def list_seps(used_seps, unused_seps, ids, code_base_seps, techs):
-    print("SUPPORTED SEPS:")
+    print(SUPPORTED_SEPS)
     print()
     for sep in used_seps:
         if get_id(code_base_seps[sep], techs) in ids:
             print(sep)
     print()
-    print("UNSUPPORTED SEPS:")
+    print(UNSUPPORTED_SEPS)
     print()
     for sep in unused_seps:
         tech = get_tech(sep, techs)
